@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Главная — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🏠</span><span>Главная</span></a>
+        <a class="nav-item" href="diary.html"><span class="nav-item__icon">📖</span><span>Электронный дневник</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Мой репертуар</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📁</span><span>Материалы и задания</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Ученик</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Главная</h1>
+          <p class="topbar__subtitle">Афиша и успеваемость</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Ученик</span></div>
+      </header>
+
+      <main class="content">
+        <section class="welcome">
+          <h2 id="greeting">Здравствуйте!</h2>
+          <p class="muted">Ваша успеваемость и ближайшие события.</p>
+        </section>
+
+        <!-- Баннер-афиша -->
+        <section class="poster" id="poster">
+          <div class="poster__glow"></div>
+          <div class="poster__content">
+            <span class="poster__tag">🎫 Ближайший концерт</span>
+            <h2 class="poster__title" id="poster-title">—</h2>
+            <div class="poster__meta">
+              <span id="poster-place">—</span>
+              <span id="poster-date">—</span>
+              <span id="poster-time">—</span>
+            </div>
+            <p class="poster__desc" id="poster-desc"></p>
+          </div>
+        </section>
+
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-card__icon">⭐</div>
+            <div class="stat-card__value" id="stat-avg">—</div><div class="stat-card__label">средний балл</div></div>
+          <div class="stat-card"><div class="stat-card__icon">📝</div>
+            <div class="stat-card__value" id="stat-grades">—</div><div class="stat-card__label">оценок</div></div>
+          <div class="stat-card"><div class="stat-card__icon">🚫</div>
+            <div class="stat-card__value" id="stat-absences">—</div><div class="stat-card__label">пропусков</div></div>
+          <div class="stat-card"><div class="stat-card__icon">📁</div>
+            <div class="stat-card__value" id="stat-homework">—</div><div class="stat-card__label">заданий</div></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head">
+            <h3>Последние оценки</h3>
+            <a class="link" href="diary.html">Весь дневник →</a>
+          </div>
+          <div id="recent-wrap"></div>
+        </div>
+
+        <div class="panel" id="other-panel" style="display:none">
+          <div class="panel__head"><h3>Другие мероприятия</h3></div>
+          <div class="event-list" id="other-events"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'student' });
+      if (!App.shell.guard(['STUDENT'])) return;
+      App.shell.init({ title: 'Главная', subtitle: 'Афиша и успеваемость' });
+
+      App.shell.loadInto(document.getElementById('recent-wrap'),
+        () => App.api.get('/api/student/dashboard/'),
+        function (d) {
+          document.getElementById('greeting').textContent = 'Здравствуйте, ' + (d.full_name || '') + '!';
+          document.getElementById('stat-avg').textContent = d.average || '—';
+          document.getElementById('stat-grades').textContent = d.grades_count || 0;
+          document.getElementById('stat-absences').textContent = d.absences || 0;
+          document.getElementById('stat-homework').textContent = d.homework_pending || 0;
+
+          var upcoming = d.events || [];
+          var lead = upcoming[0];
+          if (lead) {
+            document.getElementById('poster-title').textContent = lead.title;
+            document.getElementById('poster-place').textContent = '📍 ' + lead.place;
+            document.getElementById('poster-date').textContent = '🗓 ' + App.ui.formatDate(lead.date);
+            document.getElementById('poster-time').textContent = '🕒 ' + App.ui.formatTime(lead.time);
+            var desc = document.getElementById('poster-desc');
+            if (lead.description) desc.textContent = lead.description;
+          } else {
+            document.querySelector('#poster .poster__tag').textContent = 'Афиша пока пуста';
+            document.getElementById('poster-title').textContent = 'Следите за новостями школы';
+            document.getElementById('poster-place').textContent = '';
+            document.getElementById('poster-date').textContent = '';
+            document.getElementById('poster-time').textContent = '';
+          }
+
+          var others = upcoming.slice(1);
+          if (others.length) {
+            document.getElementById('other-panel').style.display = '';
+            App.ui.mount(document.getElementById('other-events'), others.map(function (ev) { return App.shell.eventCard(ev); }));
+          }
+
+          var recent = d.recent || [];
+          if (!recent.length) return App.ui.emptyState('Оценок пока нет.');
+          return recentTable(recent);
+        });
+
+      function recentTable(records) {
+        return App.ui.h('div', { class: 'table-wrap' },
+          App.ui.h('table', { class: 'table' },
+            App.ui.h('thead', null, App.ui.h('tr', null,
+              App.ui.h('th', null, 'Дата'), App.ui.h('th', null, 'Предмет'),
+              App.ui.h('th', null, 'Посещение'), App.ui.h('th', null, 'Оценка'), App.ui.h('th', null, 'Комментарий'))),
+            App.ui.h('tbody', null, records.map(function (r) {
+              return App.ui.h('tr', null,
+                App.ui.h('td', null, App.ui.formatDate(r.date)),
+                App.ui.h('td', null, r.subject),
+                App.ui.h('td', null, attendanceBadge(r.attendance)),
+                App.ui.h('td', null, App.ui.gradeBadge(r.grade)),
+                App.ui.h('td', { class: 'muted' }, r.comment || '—'));
+            }))));
+      }
+      function attendanceBadge(v) {
+        return App.ui.h('span', { class: 'badge badge--' + (v === 'Б' ? 'done' : 'wip') }, v === 'Б' ? 'Был' : 'Н/Б');
+      }
+    })();
+  </script>
+</body>
+</html>

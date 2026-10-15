@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Материалы и задания — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🏠</span><span>Главная</span></a>
+        <a class="nav-item" href="diary.html"><span class="nav-item__icon">📖</span><span>Электронный дневник</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Мой репертуар</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📁</span><span>Материалы и задания</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Ученик</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Материалы и задания</h1>
+          <p class="topbar__subtitle">Домашние задания от преподавателей</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Ученик</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Материалы и задания</h2>
+            <p class="muted">Домашние задания с прикреплёнными нотными файлами (PDF, аудио).</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="hw-list" id="hw-list"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'student' });
+      if (!App.shell.guard(['STUDENT'])) return;
+      App.shell.init({ title: 'Материалы и задания', subtitle: 'Домашние задания' });
+
+      App.shell.loadInto(document.getElementById('hw-list'),
+        () => App.api.get('/api/student/homework/'),
+        function (list) {
+          if (!list.length) return App.ui.emptyState('Заданий пока нет.');
+          return list.map(function (hw) {
+            return App.ui.h('div', { class: 'hw-item' },
+              App.ui.h('div', { class: 'hw-item__body' },
+                App.ui.h('div', { class: 'hw-item__top' },
+                  App.ui.h('h4', null, hw.title),
+                  App.ui.h('span', { class: 'tag' }, hw.subject)),
+                App.ui.h('p', { class: 'muted small' },
+                  'Преподаватель: ' + (hw.teacher || '—') + ' · выдано ' + App.ui.formatDate(hw.created_at)),
+                hw.description ? App.ui.h('p', null, hw.description) : null,
+                App.ui.h('p', { class: 'due' }, '📅 Срок сдачи: ' + App.ui.formatDate(hw.due_date))),
+              App.ui.h('div', { class: 'hw-item__action' },
+                hw.file_name
+                  ? App.ui.h('a', { class: 'btn btn--primary btn--sm', href: hw.file_url || '#', target: '_blank', rel: 'noopener' },
+                      '⬇ Скачать ' + hw.file_name)
+                  : App.ui.h('span', { class: 'muted small' }, 'Файлы не прикреплены')));
+          });
+        });
+    })();
+  </script>
+</body>
+</html>

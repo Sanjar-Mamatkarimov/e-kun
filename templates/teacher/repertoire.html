@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Репертуарный план — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🎫</span><span>Главная и афиша</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Мои ученики</span></a>
+        <a class="nav-item" href="journal.html"><span class="nav-item__icon">📓</span><span>Журнал и оценки</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание занятий</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Репертуарный план</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📎</span><span>Домашние задания</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Преподаватель</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Репертуарный план</h1>
+          <p class="topbar__subtitle">Произведения учеников и статусы подготовки</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Преподаватель</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Репертуарный план</h2>
+            <p class="muted">Добавляйте произведения и обновляйте статусы: В работе → Готово к зачету → Сдано.</p>
+          </div>
+          <button class="btn btn--primary" id="btn-add">+ Добавить произведение</button>
+        </div>
+
+        <div class="toolbar">
+          <label class="toolbar__field"><span>Ученик:</span>
+            <select class="input input--sm" id="sel-student"></select></label>
+        </div>
+
+        <div class="panel">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>Произведение</th><th>Предмет</th><th>Статус</th></tr>
+              </thead>
+              <tbody id="rep-body"></tbody>
+            </table>
+          </div>
+          <div id="rep-empty" class="state state--empty" style="display:none">
+            <div class="state__icon">🎼</div>
+            <p>Репертуар пуст.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Модальное окно: новое произведение -->
+  <div class="modal-overlay modal-hidden" id="modal-piece">
+    <form class="modal" id="piece-form">
+      <div class="modal__head">
+        <h3 class="modal__title">Новое произведение</h3>
+        <button type="button" class="modal__close" data-close="modal-piece" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="form-grid">
+          <div style="grid-column:1/-1">
+            <label class="field"><span class="field__label">Ученик</span>
+              <select class="input" name="student_id" id="piece-student"></select></label>
+          </div>
+          <div style="grid-column:1/-1">
+            <label class="field"><span class="field__label">Название *</span>
+              <input class="input" name="title" placeholder="Концерт ля минор, I ч." required /></label>
+          </div>
+          <label class="field"><span class="field__label">Композитор</span>
+            <input class="input" name="composer" placeholder="А. Вивальди" /></label>
+          <label class="field"><span class="field__label">Предмет</span>
+            <select class="input" name="subject">
+              <option>Специальность</option><option>Сольфеджио</option><option>Муз. литература</option>
+              <option>Хор</option><option>Оркестр</option><option>Ансамбль</option><option>Теория музыки</option>
+            </select></label>
+          <label class="field" style="grid-column:1/-1"><span class="field__label">Статус</span>
+            <select class="input" name="status">
+              <option>В работе</option><option>Готово к зачету</option><option>Сдано</option>
+            </select></label>
+        </div>
+        <div class="modal__error" id="piece-error" style="display:none"></div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close="modal-piece">Отмена</button>
+        <button type="submit" class="btn btn--primary">Добавить</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'teacher' });
+      if (!App.shell.guard(['TEACHER'])) return;
+      App.shell.init({ title: 'Репертуарный план', subtitle: 'Произведения учеников' });
+
+      var studentSel = document.getElementById('sel-student');
+      var body = document.getElementById('rep-body');
+      var empty = document.getElementById('rep-empty');
+      var stuOpts = document.getElementById('piece-student');
+      var modal = document.getElementById('modal-piece');
+      var form = document.getElementById('piece-form');
+      var errorBox = document.getElementById('piece-error');
+      var students = [];
+      var studentId = null;
+
+      function openModal() { modal.classList.remove('modal-hidden'); modal.classList.add('is-open'); errorBox.style.display = 'none'; }
+      function closeModal() { modal.classList.add('modal-hidden'); modal.classList.remove('is-open'); }
+      document.addEventListener('click', function (e) {
+        var closer = e.target.closest('[data-close]');
+        if (closer) closeModal();
+        if (e.target.classList.contains('modal-overlay')) closeModal();
+      });
+
+      App.api.get(App.CONFIG.ENDPOINTS.myStudents).then(function (list) {
+        students = list || [];
+        if (!students.length) { App.ui.mount(body, App.ui.emptyState('Сначала добавьте учеников.')); return; }
+        students.forEach(function (s) {
+          studentSel.appendChild(App.ui.h('option', { value: s.id }, s.full_name + ' · ' + (s.class_name || '')));
+          stuOpts.appendChild(App.ui.h('option', { value: s.id }, s.full_name));
+        });
+        studentId = students[0].id;
+        studentSel.value = String(studentId);
+        draw();
+      }).catch((err) => App.ui.mount(body, App.ui.errorState(err.message)));
+
+      studentSel.addEventListener('change', function (e) { studentId = Number(e.target.value); draw(); });
+
+      document.getElementById('btn-add').addEventListener('click', function () {
+        var select = stuOpts;
+        if (studentId) select.value = String(studentId);
+        openModal();
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var data = {};
+        form.querySelectorAll('input, select').forEach(function (el) { if (el.name) data[el.name] = el.value.trim(); });
+        if (!data.title) { showError('Укажите название произведения.'); return; }
+        var btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+          await App.api.post(App.CONFIG.ENDPOINTS.repertoire, data);
+          App.ui.toast('Произведение добавлено', 'success');
+          closeModal(); form.reset(); draw();
+        } catch (err) { showError(err.message); }
+        finally { btn.disabled = false; }
+      });
+
+      function showError(msg) { errorBox.textContent = msg; errorBox.style.display = ''; }
+
+      function draw() {
+        App.shell.loadInto(body, () => App.api.get(App.CONFIG.ENDPOINTS.repertoire, { student: studentId }), (list) => {
+          empty.style.display = list.length ? 'none' : '';
+          if (!list.length) return null;
+          return list.map(function (r) {
+            var statusSel = App.ui.select('status', ['В работе', 'Готово к зачету', 'Сдано'],
+              { class: 'input input--xs', onchange: function () { updateStatus(r, statusSel.value); } });
+            statusSel.value = r.status;
+            return App.ui.h('tr', null,
+              App.ui.h('td', null,
+                App.ui.h('strong', null, r.title),
+                App.ui.h('div', { class: 'muted small' }, r.composer || '')),
+              App.ui.h('td', null, App.ui.h('span', { class: 'tag' }, r.subject || '—')),
+              App.ui.h('td', null, statusSel));
+          });
+        });
+      }
+
+      function updateStatus(item, status) {
+        App.api.patch(App.CONFIG.ENDPOINTS.repertoireItem(item.id), { status: status })
+          .then(function () { App.ui.toast('Статус обновлён', 'success'); })
+          .catch(function (err) { App.ui.toast(err.message, 'error'); draw(); });
+      }
+    })();
+  </script>
+</body>
+</html>

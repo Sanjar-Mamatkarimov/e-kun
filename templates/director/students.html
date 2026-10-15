@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Реестр учеников — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">📊</span><span>Дашборд</span></a>
+        <a class="nav-item" href="teachers.html"><span class="nav-item__icon">👨‍🏫</span><span>Преподаватели</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Реестр учеников</span></a>
+        <a class="nav-item" href="events.html"><span class="nav-item__icon">🎫</span><span>Концерты и анонсы</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Директор</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Реестр учеников</h1>
+          <p class="topbar__subtitle">Создание учеников и закрепление за преподавателями</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Директор</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Реестр учеников</h2>
+            <p class="muted">Директор создаёт учётные записи учеников и закрепляет каждого за преподавателем.</p>
+          </div>
+          <button class="btn btn--primary" id="btn-add">+ Добавить ученика</button>
+        </div>
+
+        <div class="toolbar">
+          <label class="toolbar__field">
+            <span>Фильтр по классу:</span>
+            <select class="input input--sm" id="class-filter">
+              <option value="">Все классы</option>
+            </select>
+          </label>
+          <span class="toolbar__count" id="count-label"></span>
+        </div>
+
+        <div class="panel">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>ФИО</th><th>Класс</th><th>Предметы</th><th>Преподаватель</th><th>Средний балл</th><th>Оценок</th><th>Пропусков</th><th>Логин</th><th></th></tr>
+              </thead>
+              <tbody id="students-body"></tbody>
+            </table>
+          </div>
+          <div id="students-empty" class="state state--empty" style="display:none">
+            <div class="state__icon">🎓</div>
+            <p>Нет учеников для выбранного фильтра.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Модальное окно: создание и редактирование ученика -->
+  <div class="modal-overlay modal-hidden" id="modal-student">
+    <form class="modal modal--wide" id="student-form">
+      <div class="modal__head">
+        <h3 class="modal__title" id="student-modal-title">Новый ученик</h3>
+        <button type="button" class="modal__close" data-close="modal-student" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="form-grid">
+          <div style="grid-column:1/-1">
+            <label class="field"><span class="field__label">ФИО *</span>
+              <input class="input" name="full_name" placeholder="Нурланова Алия" required /></label>
+          </div>
+          <label class="field"><span class="field__label">Класс</span>
+            <select class="input" name="class_name">
+              <option>1 класс</option><option>2 класс</option><option>3 класс</option>
+              <option>4 класс</option><option>5 класс</option><option>6 класс</option><option>7 класс</option>
+            </select></label>
+          <label class="field"><span class="field__label">Дата рождения</span>
+            <input class="input" name="birth_date" type="date" /></label>
+          <div class="field" style="grid-column:1/-1">
+            <span class="field__label">Преподаватели <span class="muted">(отметьте всех, к кому ученик ходит на занятия)</span></span>
+            <div class="checks" id="st-teachers"></div>
+          </div>
+          <label class="field" id="student-login-field"><span class="field__label">Логин *</span>
+            <input class="input" name="login" id="st-login" placeholder="генерируется" /></label>
+          <label class="field" id="student-password-field"><span class="field__label">Пароль *</span>
+            <input class="input" name="password" id="st-password" placeholder="генерируется" /></label>
+
+          <div class="field" style="grid-column:1/-1">
+            <span class="field__label">Предметы <span class="muted">(отметьте все предметы ученика)</span></span>
+            <div class="checks">
+              <label class="check"><input type="checkbox" name="subjects" value="Специальность" checked /><span>Специальность</span></label>
+              <label class="check"><input type="checkbox" name="subjects" value="Сольфеджио" /><span>Сольфеджио</span></label>
+              <label class="check"><input type="checkbox" name="subjects" value="Муз. литература" /><span>Муз. литература</span></label>
+              <label class="check"><input type="checkbox" name="subjects" value="Хор" /><span>Хор</span></label>
+              <label class="check"><input type="checkbox" name="subjects" value="Оркестр" /><span>Оркестр</span></label>
+              <label class="check"><input type="checkbox" name="subjects" value="Ансамбль" /><span>Ансамбль</span></label>
+              <label class="check"><input type="checkbox" name="subjects" value="Теория музыки" /><span>Теория музыки</span></label>
+            </div>
+          </div>
+          <div style="grid-column:1/-1" id="student-generate-wrap">
+            <button type="button" class="btn btn--ghost btn--sm" id="btn-generate">⚙ Сгенерировать логин и пароль</button>
+          </div>
+        </div>
+        <div class="modal__error" id="student-error" style="display:none"></div>
+      </div>
+      <p class="form-note" id="student-edit-note" style="display:none;padding:0 22px 14px">При редактировании логин и пароль не меняются. Чтобы изменить доступ — создайте нового ученика.</p>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close="modal-student">Отмена</button>
+        <button type="submit" class="btn btn--primary" id="student-submit">Создать</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'director' });
+      if (!App.shell.guard(['DIRECTOR'])) return;
+      App.shell.init({ title: 'Реестр учеников', subtitle: 'Ученики школы' });
+
+      var tbody = document.getElementById('students-body');
+      var empty = document.getElementById('students-empty');
+      var filterSel = document.getElementById('class-filter');
+      var countLabel = document.getElementById('count-label');
+      var modal = document.getElementById('modal-student');
+      var form = document.getElementById('student-form');
+      var errorBox = document.getElementById('student-error');
+      var modalTitle = document.getElementById('student-modal-title');
+      var submitButton = document.getElementById('student-submit');
+      var editNote = document.getElementById('student-edit-note');
+      var teacherChecks = document.getElementById('st-teachers');
+      var generateWrap = document.getElementById('student-generate-wrap');
+      var credentialFields = [document.getElementById('student-login-field'), document.getElementById('student-password-field')];
+
+      var all = [];
+      var teachers = [];
+      var teacherMap = {};
+      var statisticsByStudent = {};
+      var filter = '';
+      var editingStudentId = null;
+
+      filterSel.addEventListener('change', function (e) { filter = e.target.value; draw(); });
+
+      // ---- модальное окно ----
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('[data-close]') || e.target.classList.contains('modal-overlay')) closeModal();
+      });
+      document.getElementById('btn-add').addEventListener('click', function () { openModal(); });
+
+      document.getElementById('btn-generate').addEventListener('click', function () {
+        var creds = generateCredentials(form.querySelector('input[name="full_name"]').value.trim());
+        document.getElementById('st-login').value = creds.login;
+        document.getElementById('st-password').value = creds.password;
+      });
+
+      function openModal(student) {
+        form.reset();
+        editingStudentId = student ? student.id : null;
+        modalTitle.textContent = student ? 'Редактировать ученика' : 'Новый ученик';
+        submitButton.textContent = student ? 'Сохранить изменения' : 'Создать';
+        editNote.style.display = student ? '' : 'none';
+        credentialFields.concat([generateWrap]).forEach(function (field) { field.style.display = student ? 'none' : ''; });
+        renderTeacherChecks(teacherIdsOf(student));
+        if (student) {
+          form.querySelector('[name="full_name"]').value = student.full_name || '';
+          form.querySelector('[name="class_name"]').value = student.class_name || '1 класс';
+          form.querySelector('[name="birth_date"]').value = student.birth_date || '';
+          form.querySelectorAll('input[name="subjects"]').forEach(function (checkbox) {
+            checkbox.checked = (student.subjects || []).includes(checkbox.value);
+          });
+        }
+        errorBox.textContent = '';
+        errorBox.style.display = 'none';
+        modal.classList.remove('modal-hidden');
+        modal.classList.add('is-open');
+      }
+      function closeModal() {
+        modal.classList.add('modal-hidden');
+        modal.classList.remove('is-open');
+        editingStudentId = null;
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var data = {};
+        form.querySelectorAll('input, select').forEach(function (el) {
+          if (el.name && el.name !== 'subjects' && el.name !== 'teachers') data[el.name] = el.value.trim();
+        });
+        data.subjects = Array.from(form.querySelectorAll('input[name="subjects"]:checked')).map(function (c) { return c.value; });
+        data.teacher_ids = Array.from(form.querySelectorAll('input[name="teachers"]:checked')).map(function (c) { return Number(c.value); });
+        if (!data.full_name) { showError('Укажите ФИО ученика.'); return; }
+        if (!data.subjects.length) { showError('Выберите хотя бы один предмет.'); return; }
+        if (editingStudentId === null && (!data.login || !data.password)) { showError('Укажите логин и пароль ученика.'); return; }
+        var submit = form.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        try {
+          if (editingStudentId !== null) {
+            await App.api.patch(App.CONFIG.ENDPOINTS.student(editingStudentId), {
+              full_name: data.full_name,
+              class_name: data.class_name,
+              birth_date: data.birth_date,
+              subjects: data.subjects,
+              teacher_ids: data.teacher_ids,
+            });
+            App.ui.toast('Данные ученика обновлены.', 'success');
+          } else {
+            var creds = generateCredentials(data.full_name);
+            data.login = data.login || creds.login;
+            data.password = data.password || creds.password;
+            await App.api.post(App.CONFIG.ENDPOINTS.students, data);
+            App.ui.toast('Ученик создан. Логин: ' + data.login + ' / Пароль: ' + data.password, 'success');
+          }
+          closeModal();
+          loadAll();
+        } catch (err) { showError(err.message); }
+        finally { submit.disabled = false; }
+      });
+
+      function generateCredentials(fullName) {
+        var map = { а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'e',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'kh',ц:'ts',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya' };
+        var word = (fullName || 'student').toLowerCase().split(/\s+/)[0] || 'student';
+        var base = word.split('').map(function (ch) { return map[ch] !== undefined ? map[ch] : ch; }).join('').replace(/[^a-z0-9]/g, '') || 'student';
+        var chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+        var pass = '';
+        for (var i = 0; i < 6; i++) pass += chars[Math.floor(Math.random() * chars.length)];
+        return { login: base + Math.floor(10 + Math.random() * 90), password: pass };
+      }
+
+      function showError(msg) { errorBox.textContent = msg; errorBox.style.display = ''; }
+
+      function currentList() {
+        return filter ? all.filter((s) => s.class_name === filter) : all;
+      }
+
+      function teacherIdsOf(student) {
+        if (!student) return [];
+        if (Array.isArray(student.teacher_ids)) return student.teacher_ids.map(Number);
+        return student.teacher_id != null ? [Number(student.teacher_id)] : [];
+      }
+
+      function teacherNames(student) {
+        var ids = teacherIdsOf(student);
+        if (!ids.length) return App.ui.h('span', { class: 'muted' }, 'Не назначен');
+        return App.ui.h('span', null, ids.map(function (id) { return teacherMap[id] || ('#' + id); }).join(', '));
+      }
+
+      function buildRows(list) {
+        empty.style.display = list.length ? 'none' : '';
+        return list.map(function (s) {
+          return App.ui.h('tr', { 'data-id': String(s.id) },
+            App.ui.h('td', null, App.ui.h('strong', null, s.full_name)),
+            App.ui.h('td', null, App.ui.h('span', { class: 'pill' }, s.class_name || '—')),
+            App.ui.h('td', null, App.ui.h('div', { class: 'tags' }, (s.subjects || []).map((sub) => App.ui.h('span', { class: 'tag' }, sub)))),
+            App.ui.h('td', null, teacherNames(s)),
+            App.ui.h('td', null, statisticsByStudent[s.id] && statisticsByStudent[s.id].average != null ? statisticsByStudent[s.id].average : '—'),
+            App.ui.h('td', null, statisticsByStudent[s.id] ? statisticsByStudent[s.id].grades_count : '—'),
+            App.ui.h('td', null, statisticsByStudent[s.id] ? statisticsByStudent[s.id].absences : '—'),
+            App.ui.h('td', null, s.login || '—'),
+            App.ui.h('td', { class: 'col-actions' },
+              App.ui.h('button', {
+                class: 'btn btn--ghost btn--sm',
+                type: 'button',
+                'aria-label': 'Изменить ученика ' + s.full_name,
+                onclick: function () { openModal(s); },
+              }, 'Изменить'),
+              App.ui.h('button', { class: 'btn btn--danger btn--sm', type: 'button', 'aria-label': 'Удалить' }, 'Удалить')));
+        });
+      }
+
+      function draw() {
+        App.ui.mount(tbody, buildRows(currentList()));
+      }
+
+      function renderTeacherChecks(selectedIds) {
+        teacherChecks.innerHTML = '';
+        if (!teachers.length) {
+          teacherChecks.appendChild(App.ui.h('span', { class: 'muted' }, 'Сначала добавьте преподавателей'));
+          return;
+        }
+        var selected = (selectedIds || []).map(Number);
+        teachers.forEach(function (t) {
+          teacherChecks.appendChild(App.ui.h('label', { class: 'check' },
+            App.ui.h('input', {
+              type: 'checkbox',
+              name: 'teachers',
+              value: String(t.id),
+              checked: selected.indexOf(Number(t.id)) !== -1,
+            }),
+            App.ui.h('span', null, t.full_name + (t.subject ? ' · ' + t.subject : ''))));
+        });
+      }
+
+      // удаление ученика (доступно директору)
+      tbody.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn--danger');
+        if (!btn) return;
+        var tr = btn.closest('tr');
+        var id = Number(tr.getAttribute('data-id'));
+        var name = tr.querySelector('strong').textContent;
+        App.ui.confirmDialog('Удалить ученика «' + name + '»? Его учётная запись и все данные (журнал, репертуар, задания) будут удалены.')
+          .then(function (ok) {
+            if (!ok) return;
+            App.api.del(App.CONFIG.ENDPOINTS.student(id))
+              .then(function () { App.ui.toast('Ученик удалён', 'success'); loadAll(); })
+              .catch(function (err) { App.ui.toast(err.message, 'error'); });
+          });
+      });
+
+      function loadAll() {
+        App.shell.loadInto(tbody,
+          async function () {
+            var results = await Promise.all([
+              App.api.get(App.CONFIG.ENDPOINTS.students),
+              App.api.get(App.CONFIG.ENDPOINTS.directorStudentStats),
+              App.api.get(App.CONFIG.ENDPOINTS.teachers),
+            ]);
+            statisticsByStudent = {};
+            (results[1] || []).forEach(function (stats) { statisticsByStudent[stats.student_id] = stats; });
+            return { students: results[0] || [], teachers: results[2] || [] };
+          },
+          function (data) {
+            all = data.students;
+            teachers = data.teachers;
+            teacherMap = {};
+            teachers.forEach(function (t) { teacherMap[t.id] = t.full_name; });
+
+            countLabel.textContent = App.ui.plural(all.length, 'ученик', 'ученика', 'учеников') + ' в школе';
+            var current = filterSel.value;
+            filterSel.innerHTML = '';
+            filterSel.appendChild(App.ui.h('option', { value: '' }, 'Все классы'));
+            Array.from(new Set(all.map((s) => s.class_name).filter(Boolean))).sort().forEach(function (c) {
+              filterSel.appendChild(App.ui.h('option', { value: c }, c));
+            });
+            if (current) filterSel.value = current;
+            filter = filterSel.value;
+            return buildRows(currentList());
+          });
+      }
+      loadAll();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Главная и афиша — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🎫</span><span>Главная и афиша</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Мои ученики</span></a>
+        <a class="nav-item" href="journal.html"><span class="nav-item__icon">📓</span><span>Журнал и оценки</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание занятий</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Репертуарный план</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📎</span><span>Домашние задания</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Преподаватель</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Главная и афиша</h1>
+          <p class="topbar__subtitle">Расписание и уведомления о концертах от директора</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Преподаватель</span></div>
+      </header>
+
+      <main class="content">
+        <section class="welcome">
+          <h2>Здравствуйте!</h2>
+          <p class="muted">Статистика учеников, расписание занятий и афиша школы.</p>
+        </section>
+
+        <div class="stat-grid">
+          <a class="stat-card" href="students.html">
+            <div class="stat-card__icon">🎓</div>
+            <div class="stat-card__value" id="stat-students">—</div>
+            <div class="stat-card__label">Моих учеников</div>
+          </a>
+          <a class="stat-card" href="dashboard.html">
+            <div class="stat-card__icon">🎫</div>
+            <div class="stat-card__value" id="stat-events">—</div>
+            <div class="stat-card__label">Мероприятий</div>
+          </a>
+          <a class="stat-card" href="students.html">
+            <div class="stat-card__icon">⭐</div>
+            <div class="stat-card__value" id="stat-average">—</div>
+            <div class="stat-card__label">Средний балл учеников</div>
+          </a>
+          <a class="stat-card" href="schedule.html">
+            <div class="stat-card__icon">🗓️</div>
+            <div class="stat-card__value" id="stat-schedule">—</div>
+            <div class="stat-card__label">Занятий в расписании</div>
+          </a>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head"><h3>🎫 Афиша ближайших концертов</h3></div>
+          <div class="event-list" id="event-list"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'teacher' });
+      if (!App.shell.guard(['TEACHER'])) return;
+      App.shell.init({ title: 'Главная и афиша', subtitle: 'Концерты и уведомления' });
+
+      Promise.all([
+        App.api.get(App.CONFIG.ENDPOINTS.myStudents),
+        App.api.get(App.CONFIG.ENDPOINTS.events),
+        App.api.get(App.CONFIG.ENDPOINTS.teacherStudentStats),
+        App.api.get(App.CONFIG.ENDPOINTS.teacherSchedule),
+      ])
+        .then(function (results) {
+          var students = results[0] || [], events = results[1] || [];
+          var studentStats = results[2] || [], lessons = results[3] || [];
+          document.getElementById('stat-students').textContent = students.length;
+          document.getElementById('stat-events').textContent = events.length;
+          var gradedStudents = studentStats.filter(function (student) { return student.average != null; });
+          var average = gradedStudents.length
+            ? gradedStudents.reduce(function (sum, student) { return sum + Number(student.average); }, 0) / gradedStudents.length
+            : null;
+          document.getElementById('stat-average').textContent = average == null ? '—' : Math.round(average * 10) / 10;
+          document.getElementById('stat-schedule').textContent = lessons.length;
+          var listEl = document.getElementById('event-list');
+          if (!events.length) { App.ui.mount(listEl, App.ui.emptyState('Пока нет анонсов.')); return; }
+          App.ui.mount(listEl, events.slice(0, 4).map(function (ev) { return App.shell.eventCard(ev); }));
+        })
+        .catch(function (err) {
+          App.ui.mount(document.getElementById('event-list'), App.ui.errorState(err.message));
+        });
+    })();
+  </script>
+</body>
+</html>

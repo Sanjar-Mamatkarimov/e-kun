@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Расписание занятий — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🎫</span><span>Главная и афиша</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Мои ученики</span></a>
+        <a class="nav-item" href="journal.html"><span class="nav-item__icon">📓</span><span>Журнал и оценки</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание занятий</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Репертуарный план</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📎</span><span>Домашние задания</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Преподаватель</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Расписание занятий</h1>
+          <p class="topbar__subtitle">Планируйте занятия для своих учеников</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Преподаватель</span></div>
+      </header>
+
+      <main class="content stack">
+        <section class="panel">
+          <div class="panel__head"><h3>Добавить занятие</h3></div>
+          <form class="modal__body" id="schedule-form">
+            <div class="form-grid">
+              <label class="field"><span class="field__label">Ученик *</span>
+                <select class="input" name="student_id" id="student-select" required>
+                  <option value="">Выберите ученика</option>
+                </select>
+              </label>
+              <label class="field"><span class="field__label">Предмет *</span>
+                <select class="input" name="subject" id="subject-select" required></select>
+              </label>
+              <label class="field"><span class="field__label">День недели *</span>
+                <select class="input" name="day" required>
+                  <option value="">Выберите день</option>
+                  <option>Понедельник</option><option>Вторник</option><option>Среда</option>
+                  <option>Четверг</option><option>Пятница</option><option>Суббота</option>
+                </select>
+              </label>
+              <label class="field"><span class="field__label">Время *</span>
+                <input class="input" type="time" name="time" required />
+              </label>
+              <label class="field"><span class="field__label">Кабинет</span>
+                <input class="input" name="room" placeholder="Например, Каб. 5" />
+              </label>
+              <label class="field"><span class="field__label">Тип занятия</span>
+                <select class="input" name="kind">
+                  <option value="индивидуальное">Индивидуальное</option>
+                  <option value="групповое">Групповое</option>
+                </select>
+              </label>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn--primary" type="submit">Добавить в расписание</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel__head">
+            <h3>Расписание моих учеников</h3>
+            <span class="chip" id="lesson-count">Загрузка…</span>
+          </div>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>День</th><th>Время</th><th>Ученик</th><th>Предмет</th><th>Кабинет</th><th>Тип</th><th></th></tr>
+              </thead>
+              <tbody id="schedule-body"></tbody>
+            </table>
+          </div>
+          <div id="schedule-empty" class="state state--empty" style="display:none">
+            <div class="state__icon">🗓️</div>
+            <p>Расписание пока не составлено. Добавьте первое занятие выше.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'teacher' });
+      if (!App.shell.guard(['TEACHER'])) return;
+      App.shell.init({ title: 'Расписание занятий', subtitle: 'Управление занятиями учеников' });
+
+      var form = document.getElementById('schedule-form');
+      var studentSelect = document.getElementById('student-select');
+      var subjectSelect = document.getElementById('subject-select');
+      var tbody = document.getElementById('schedule-body');
+      var empty = document.getElementById('schedule-empty');
+      var count = document.getElementById('lesson-count');
+
+      App.CONFIG.SUBJECTS.forEach(function (subject) {
+        subjectSelect.appendChild(App.ui.h('option', { value: subject }, subject));
+      });
+
+      App.api.get(App.CONFIG.ENDPOINTS.myStudents)
+        .then(function (students) {
+          students.forEach(function (student) {
+            studentSelect.appendChild(App.ui.h('option', { value: String(student.id) }, student.full_name + ' · ' + (student.class_name || 'класс не указан')));
+          });
+          if (!students.length) {
+            studentSelect.disabled = true;
+            form.querySelector('button[type="submit"]').disabled = true;
+            App.ui.toast('Сначала добавьте ученика, чтобы составить расписание.', 'info');
+          }
+        })
+        .catch(function (error) {
+          studentSelect.disabled = true;
+          form.querySelector('button[type="submit"]').disabled = true;
+          App.ui.toast(error.message || 'Не удалось загрузить список учеников.', 'error');
+        });
+
+      function loadSchedule() {
+        App.shell.loadInto(tbody,
+          function () { return App.api.get(App.CONFIG.ENDPOINTS.teacherSchedule); },
+          function (lessons) {
+            empty.style.display = lessons.length ? 'none' : '';
+            count.textContent = App.ui.plural(lessons.length, 'занятие', 'занятия', 'занятий');
+            if (!lessons.length) return null;
+            return lessons.map(function (lesson) {
+              return App.ui.h('tr', { 'data-id': String(lesson.id) },
+                App.ui.h('td', null, App.ui.h('span', { class: 'pill' }, lesson.day)),
+                App.ui.h('td', null, App.ui.formatTime(lesson.time)),
+                App.ui.h('td', null, App.ui.h('strong', null, lesson.student_name || 'Ученик')),
+                App.ui.h('td', null, lesson.subject),
+                App.ui.h('td', null, lesson.room || '—'),
+                App.ui.h('td', null, App.ui.h('span', { class: 'tag' }, lesson.kind || 'индивидуальное')),
+                App.ui.h('td', { class: 'col-actions' },
+                  App.ui.h('button', { class: 'btn btn--danger btn--sm', type: 'button', 'aria-label': 'Удалить занятие' }, 'Удалить')));
+            });
+          });
+      }
+
+      form.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        var data = Object.fromEntries(new FormData(form).entries());
+        data.student_id = Number(data.student_id);
+        var submit = form.querySelector('button[type="submit"]');
+        submit.disabled = true;
+        try {
+          await App.api.post(App.CONFIG.ENDPOINTS.teacherSchedule, data);
+          App.ui.toast('Занятие добавлено в расписание ученика.', 'success');
+          form.reset();
+          loadSchedule();
+        } catch (error) {
+          App.ui.toast(error.message || 'Не удалось добавить занятие.', 'error');
+        } finally {
+          submit.disabled = false;
+        }
+      });
+
+      tbody.addEventListener('click', function (event) {
+        var button = event.target.closest('.btn--danger');
+        if (!button) return;
+        var row = button.closest('tr');
+        var id = Number(row.getAttribute('data-id'));
+        var studentName = row.querySelector('strong').textContent;
+        App.ui.confirmDialog('Удалить занятие из расписания ученика «' + studentName + '»?')
+          .then(function (confirmed) {
+            if (!confirmed) return;
+            App.api.del(App.CONFIG.ENDPOINTS.teacherScheduleItem(id))
+              .then(function () {
+                App.ui.toast('Занятие удалено из расписания.', 'success');
+                loadSchedule();
+              })
+              .catch(function (error) { App.ui.toast(error.message, 'error'); });
+          });
+      });
+
+      loadSchedule();
+    })();
+  </script>
+</body>
+</html>

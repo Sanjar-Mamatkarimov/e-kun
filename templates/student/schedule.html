@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Расписание — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🏠</span><span>Главная</span></a>
+        <a class="nav-item" href="diary.html"><span class="nav-item__icon">📖</span><span>Электронный дневник</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Мой репертуар</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📁</span><span>Материалы и задания</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Ученик</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Расписание</h1>
+          <p class="topbar__subtitle">Индивидуальные и групповые занятия</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Ученик</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Расписание занятий</h2>
+            <p class="muted">График индивидуальных и групповых занятий по дням недели.</p>
+          </div>
+        </div>
+        <div class="schedule-grid" id="schedule-grid"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'student' });
+      if (!App.shell.guard(['STUDENT'])) return;
+      App.shell.init({ title: 'Расписание', subtitle: 'График занятий' });
+
+      App.shell.loadInto(document.getElementById('schedule-grid'),
+        () => App.api.get('/api/student/schedule/'),
+        function (list) {
+          if (!list.length) return App.ui.emptyState('Расписание пока не составлено.');
+          var byDay = {};
+          list.forEach(function (item) { (byDay[item.day] = byDay[item.day] || []).push(item); });
+          var order = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+          var days = Object.keys(byDay).sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
+          return days.map(function (day) {
+            return App.ui.h('div', { class: 'day-col' },
+              App.ui.h('h3', { class: 'day-col__title' }, day),
+              byDay[day].map(function (item) {
+                return App.ui.h('div', { class: 'lesson' },
+                  App.ui.h('div', { class: 'lesson__time' }, App.ui.formatTime(item.time)),
+                  App.ui.h('div', { class: 'lesson__body' },
+                    App.ui.h('strong', null, item.subject),
+                    App.ui.h('span', { class: 'muted small' }, item.teacher + ' · ' + item.room),
+                    App.ui.h('span', { class: 'tag tag--sm' }, item.kind)));
+              }));
+          });
+        });
+    })();
+  </script>
+</body>
+</html>

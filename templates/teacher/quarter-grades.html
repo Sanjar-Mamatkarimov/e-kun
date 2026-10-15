@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Четвертные оценки — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🎫</span><span>Главная и афиша</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Мои ученики</span></a>
+        <a class="nav-item" href="journal.html"><span class="nav-item__icon">📓</span><span>Журнал и оценки</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание занятий</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Репертуарный план</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📎</span><span>Домашние задания</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Преподаватель</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Четвертные оценки</h1>
+          <p class="topbar__subtitle">Рекомендация по текущим оценкам и итог учителя</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Преподаватель</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Итоги четверти</h2>
+            <p class="muted">Только ваш предмет и ваши ученики, назначенные директором. Рекомендация — среднее текущих оценок за период; итоговую оценку подтверждаете вы.</p>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <span class="toolbar__field"><span>Мой предмет:</span><span class="chip" id="lesson-subject">…</span></span>
+          <label class="toolbar__field"><span>Учебный год:</span><select class="input input--sm" id="sel-year"></select></label>
+          <label class="toolbar__field"><span>Четверть:</span>
+            <select class="input input--sm" id="sel-quarter">
+              <option value="1">I четверть</option>
+              <option value="2">II четверть</option>
+              <option value="3">III четверть</option>
+              <option value="4">IV четверть</option>
+            </select>
+          </label>
+          <label class="toolbar__field"><span>С:</span><input class="input input--sm" type="date" id="inp-start" required /></label>
+          <label class="toolbar__field"><span>По:</span><input class="input input--sm" type="date" id="inp-end" required /></label>
+        </div>
+        <p class="form-note">Укажите фактические даты четверти по календарю школы — только оценки внутри этого периода попадут в расчёт.</p>
+
+        <div class="panel" id="grades-panel">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>Ученик</th><th>Оценок за период</th><th>Средний балл</th><th>Рекомендация</th><th>Итог учителя</th></tr>
+              </thead>
+              <tbody id="grades-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn--primary" id="btn-save">💾 Сохранить четвертные оценки</button>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'teacher' });
+      if (!App.shell.guard(['TEACHER'])) return;
+      App.shell.init({ title: 'Четвертные оценки', subtitle: 'Рекомендации по текущим оценкам' });
+
+      var subjectEl = document.getElementById('lesson-subject');
+      var yearSel = document.getElementById('sel-year');
+      var quarterSel = document.getElementById('sel-quarter');
+      var startInput = document.getElementById('inp-start');
+      var endInput = document.getElementById('inp-end');
+      var body = document.getElementById('grades-body');
+      var students = [];
+      var subject = '';
+
+      var now = new Date();
+      var schoolYearStart = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+      for (var year = schoolYearStart - 2; year <= schoolYearStart + 1; year += 1) {
+        yearSel.appendChild(App.ui.h('option', { value: year + '/' + (year + 1) }, year + '/' + (year + 1)));
+      }
+      yearSel.value = schoolYearStart + '/' + (schoolYearStart + 1);
+      quarterSel.value = '1';
+      startInput.value = schoolYearStart + '-09-01';
+      endInput.value = schoolYearStart + '-11-30';
+
+      Promise.all([
+        App.api.get(App.CONFIG.ENDPOINTS.myStudents),
+        App.api.fetchMe().catch(function () { return App.auth.getUser() || {}; }),
+      ]).then(function (results) {
+        students = results[0] || [];
+        var me = results[1] || {};
+        subject = me.subject || (App.auth.getUser() || {}).subject || '';
+        subjectEl.textContent = subject || 'не назначен';
+        if (!subject) {
+          App.ui.mount(body, App.ui.emptyState('Директор ещё не назначил вам предмет. Обратитесь к директору.'));
+          document.getElementById('btn-save').disabled = true;
+          return;
+        }
+        refresh();
+      }).catch(function (err) {
+        App.ui.mount(body, App.ui.errorState(err.message));
+        document.getElementById('btn-save').disabled = true;
+      });
+
+      [yearSel, quarterSel, startInput, endInput].forEach(function (input) {
+        input.addEventListener('change', refresh);
+      });
+
+      function refresh() {
+        var startDate = startInput.value;
+        var endDate = endInput.value;
+        if (!subject || !startDate || !endDate || startDate > endDate) {
+          App.ui.mount(body, App.ui.emptyState('Укажите корректный период четверти.'));
+          return;
+        }
+        App.ui.mount(body, App.ui.spinner('Рассчитываем рекомендации…'));
+        Promise.all([
+          App.api.get(App.CONFIG.ENDPOINTS.journal, { subject: subject }),
+          App.api.get(App.CONFIG.ENDPOINTS.quarterGrades, {
+            subject: subject,
+            school_year: yearSel.value,
+            quarter: quarterSel.value,
+          }),
+        ]).then(function (results) {
+          renderRows(results[0] || [], results[1] || [], startDate, endDate);
+        }).catch(function (err) {
+          App.ui.mount(body, App.ui.errorState(err.message));
+        });
+      }
+
+      function renderRows(entries, savedGrades, startDate, endDate) {
+        if (!students.length) {
+          App.ui.mount(body, App.ui.emptyState('Пока нет учеников, назначенных вам директором.'));
+          return;
+        }
+        var savedByStudent = new Map();
+        savedGrades.forEach(function (item) { savedByStudent.set(String(item.student_id), item); });
+        App.ui.mount(body, students.map(function (student) {
+          var grades = entries.filter(function (entry) {
+            return entry.student_id === student.id && entry.grade != null &&
+              entry.date >= startDate && entry.date <= endDate;
+          }).map(function (entry) { return Number(entry.grade); });
+          var average = grades.length
+            ? grades.reduce(function (sum, grade) { return sum + grade; }, 0) / grades.length
+            : null;
+          var suggested = average == null ? null : Math.round(average);
+          var saved = savedByStudent.get(String(student.id));
+          var gradeSelect = App.ui.h('select', { class: 'input input--xs', disabled: suggested == null });
+          ['', '1', '2', '3', '4', '5'].forEach(function (grade) {
+            gradeSelect.appendChild(App.ui.h('option', { value: grade }, grade || '—'));
+          });
+          gradeSelect.value = saved ? String(saved.grade) : (suggested == null ? '' : String(suggested));
+          return App.ui.h('tr', { 'data-sid': String(student.id) },
+            App.ui.h('td', null,
+              App.ui.h('strong', null, student.full_name),
+              App.ui.h('div', { class: 'muted small' }, student.class_name || '')),
+            App.ui.h('td', null, String(grades.length)),
+            App.ui.h('td', null, average == null ? '—' : (Math.round(average * 100) / 100).toFixed(2)),
+            App.ui.h('td', null, suggested == null
+              ? App.ui.h('span', { class: 'muted' }, 'Нет оценок')
+              : App.ui.h('span', { class: 'badge badge--ready' }, String(suggested))),
+            App.ui.h('td', null,
+              gradeSelect,
+              saved ? App.ui.h('div', { class: 'muted small' }, 'Сохранено') : null));
+        }));
+      }
+
+      document.getElementById('btn-save').addEventListener('click', async function () {
+        var startDate = startInput.value;
+        var endDate = endInput.value;
+        if (!startDate || !endDate || startDate > endDate) {
+          App.ui.toast('Проверьте даты четверти.', 'error');
+          return;
+        }
+        var rows = Array.from(body.querySelectorAll('tr[data-sid]'));
+        var records = rows.filter(function (row) {
+          return row.querySelector('select').value !== '';
+        }).map(function (row) {
+          return App.api.post(App.CONFIG.ENDPOINTS.quarterGrades, {
+            student_id: Number(row.getAttribute('data-sid')),
+            subject: subject,
+            school_year: yearSel.value,
+            quarter: Number(quarterSel.value),
+            start_date: startDate,
+            end_date: endDate,
+            grade: Number(row.querySelector('select').value),
+          });
+        });
+        if (!records.length) {
+          App.ui.toast('Нет оценок для сохранения.', 'error');
+          return;
+        }
+        var button = document.getElementById('btn-save');
+        button.disabled = true;
+        try {
+          await Promise.all(records);
+          App.ui.toast('Четвертные оценки сохранены.', 'success');
+          refresh();
+        } catch (err) {
+          App.ui.toast(err.message, 'error');
+        } finally {
+          button.disabled = false;
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

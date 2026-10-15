@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Дашборд — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">📊</span><span>Дашборд</span></a>
+        <a class="nav-item" href="teachers.html"><span class="nav-item__icon">👨‍🏫</span><span>Преподаватели</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Реестр учеников</span></a>
+        <a class="nav-item" href="events.html"><span class="nav-item__icon">🎫</span><span>Концерты и анонсы</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Директор</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Дашборд</h1>
+          <p class="topbar__subtitle">Общая статистика школы</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Директор</span></div>
+      </header>
+
+      <main class="content">
+        <section class="welcome">
+          <h2>Обзор школы</h2>
+          <p class="muted">Сводные показатели успеваемости, посещаемости и событий по всей школе.</p>
+        </section>
+
+        <div class="stat-grid">
+          <a class="stat-card" href="teachers.html">
+            <div class="stat-card__icon">👨‍🏫</div>
+            <div class="stat-card__value" id="stat-teachers">—</div>
+            <div class="stat-card__label">Преподавателей</div>
+          </a>
+          <a class="stat-card" href="students.html">
+            <div class="stat-card__icon">🎓</div>
+            <div class="stat-card__value" id="stat-students">—</div>
+            <div class="stat-card__label">Учеников</div>
+          </a>
+          <a class="stat-card" href="events.html">
+            <div class="stat-card__icon">🎫</div>
+            <div class="stat-card__value" id="stat-events">—</div>
+            <div class="stat-card__label">Мероприятий</div>
+          </a>
+          <div class="stat-card">
+            <div class="stat-card__icon">⭐</div>
+            <div class="stat-card__value" id="stat-average">—</div>
+            <div class="stat-card__label">Средний балл по школе</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card__icon">✅</div>
+            <div class="stat-card__value" id="stat-attendance">—</div>
+            <div class="stat-card__label">Посещаемость занятий</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head">
+            <h3>Ближайшие концерты и анонсы</h3>
+            <a class="link" href="events.html">Управлять →</a>
+          </div>
+          <div class="event-list" id="event-list"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'director' });
+      if (!App.shell.guard(['DIRECTOR'])) return;
+      App.shell.init({ title: 'Дашборд', subtitle: 'Общая статистика школы' });
+
+      App.shell.loadInto(document.getElementById('event-list'),
+        () => App.api.get(App.CONFIG.ENDPOINTS.stats),
+        (data) => {
+          document.getElementById('stat-teachers').textContent = data.teachers || 0;
+          document.getElementById('stat-students').textContent = data.students || 0;
+          document.getElementById('stat-events').textContent = data.events || 0;
+          document.getElementById('stat-average').textContent = data.average == null ? '—' : data.average;
+          document.getElementById('stat-attendance').textContent = data.attendance_rate == null ? '—' : data.attendance_rate + '%';
+          const events = data.upcoming_events || [];
+          if (!events.length) return App.ui.emptyState('Пока нет запланированных мероприятий.');
+          return document.createDocumentFragment ? renderList(events) : null;
+        });
+      function renderList(events) {
+        const frag = document.createDocumentFragment();
+        events.forEach((ev) => frag.appendChild(App.shell.eventCard(ev)));
+        return frag;
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Мой репертуар — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🏠</span><span>Главная</span></a>
+        <a class="nav-item" href="diary.html"><span class="nav-item__icon">📖</span><span>Электронный дневник</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Мой репертуар</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📁</span><span>Материалы и задания</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Ученик</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Мой репертуар</h1>
+          <p class="topbar__subtitle">Текущие произведения и статусы подготовки</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Ученик</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Мой репертуар</h2>
+            <p class="muted">Статусы: В работе · Готово к зачету · Сдано.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>Произведение</th><th>Композитор</th><th>Предмет</th><th>Статус</th></tr>
+              </thead>
+              <tbody id="rep-body"></tbody>
+            </table>
+          </div>
+          <div id="rep-empty" class="state state--empty" style="display:none">
+            <div class="state__icon">🎼</div>
+            <p>В репертуаре пока нет произведений.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'student' });
+      if (!App.shell.guard(['STUDENT'])) return;
+      App.shell.init({ title: 'Мой репертуар', subtitle: 'Статусы произведений' });
+
+      App.shell.loadInto(document.getElementById('rep-body'),
+        () => App.api.get('/api/student/repertoire/'),
+        function (list) {
+          document.getElementById('rep-empty').style.display = list.length ? 'none' : '';
+          if (!list.length) return null;
+          return list.map(function (r) {
+            return App.ui.h('tr', null,
+              App.ui.h('td', null, App.ui.h('strong', null, r.title)),
+              App.ui.h('td', null, r.composer || '—'),
+              App.ui.h('td', null, App.ui.h('span', { class: 'tag' }, r.subject || '—')),
+              App.ui.h('td', null, App.ui.statusBadge(r.status)));
+          });
+        });
+    })();
+  </script>
+</body>
+</html>

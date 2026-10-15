@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Домашние задания — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🎫</span><span>Главная и афиша</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Мои ученики</span></a>
+        <a class="nav-item" href="journal.html"><span class="nav-item__icon">📓</span><span>Журнал и оценки</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание занятий</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Репертуарный план</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📎</span><span>Домашние задания</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Преподаватель</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Домашние задания</h1>
+          <p class="topbar__subtitle">Отправка заданий с прикреплёнными файлами (ноты PDF, аудио)</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Преподаватель</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Домашние задания</h2>
+            <p class="muted">Отправляйте задания ученикам с прикреплёнными нотами и аудио.</p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head"><h3>Новое задание</h3></div>
+          <div style="padding:18px 20px 22px">
+            <form class="form-grid" id="hw-form" enctype="multipart/form-data">
+              <label class="field"><span class="field__label">Ученик *</span>
+                <select class="input" name="student_id" id="hw-student" required></select></label>
+              <label class="field"><span class="field__label">Предмет *</span>
+                <select class="input" name="subject">
+                  <option>Специальность</option><option>Сольфеджио</option><option>Муз. литература</option>
+                  <option>Хор</option><option>Оркестр</option><option>Ансамбль</option><option>Теория музыки</option>
+                </select></label>
+              <div style="grid-column:1/-1">
+                <label class="field"><span class="field__label">Тема *</span>
+                  <input class="input" name="title" placeholder="Вивальди — II часть" required /></label>
+              </div>
+              <div style="grid-column:1/-1">
+                <label class="field"><span class="field__label">Описание</span>
+                  <textarea class="input" name="description" rows="3" placeholder="Что нужно сделать…"></textarea></label>
+              </div>
+              <label class="field"><span class="field__label">Срок сдачи</span>
+                <input class="input" name="due_date" type="date" /></label>
+              <label class="field"><span class="field__label">Файл (ноты PDF, аудио)</span>
+                <label class="file-drop">
+                  <input type="file" name="file" id="hw-file" accept=".pdf,.mp3,.wav,.m4a,.ogg,.jpg,.png,.zip" style="display:none" />
+                  <span class="btn btn--ghost btn--sm" role="button">📎 Прикрепить файл</span>
+                  <span class="file-name muted" id="hw-file-name">Файл не выбран</span>
+                </label></label>
+              <div class="form-actions" style="grid-column:1/-1">
+                <button class="btn btn--primary" type="submit" id="hw-submit">Отправить задание</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel__head"><h3>Отправленные задания</h3></div>
+          <div class="hw-list" id="hw-list"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'teacher' });
+      if (!App.shell.guard(['TEACHER'])) return;
+      App.shell.init({ title: 'Домашние задания', subtitle: 'Материалы для учеников' });
+
+      var form = document.getElementById('hw-form');
+      var fileInput = document.getElementById('hw-file');
+      var fileNameEl = document.getElementById('hw-file-name');
+      var students = [];
+
+      fileInput.addEventListener('change', function () {
+        fileNameEl.textContent = fileInput.files[0] ? fileInput.files[0].name : 'Файл не выбран';
+      });
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var fd = new FormData(form);
+        if (!fd.get('title')) { App.ui.toast('Укажите тему задания', 'error'); return; }
+        var btn = document.getElementById('hw-submit');
+        btn.disabled = true; btn.textContent = 'Отправка…';
+        try {
+          await App.api.postForm(App.CONFIG.ENDPOINTS.homework, fd);
+          App.ui.toast('Задание отправлено', 'success');
+          form.reset();
+          fileNameEl.textContent = 'Файл не выбран';
+          loadSent();
+        } catch (err) { App.ui.toast(err.message, 'error'); }
+        finally { btn.disabled = false; btn.textContent = 'Отправить задание'; }
+      });
+
+      App.api.get(App.CONFIG.ENDPOINTS.myStudents).then(function (list) {
+        students = list || [];
+        var sel = document.getElementById('hw-student');
+        students.forEach(function (s) { sel.appendChild(App.ui.h('option', { value: s.id }, s.full_name)); });
+      });
+
+      var listEl = document.getElementById('hw-list');
+      function loadSent() {
+        App.shell.loadInto(listEl, () => App.api.get(App.CONFIG.ENDPOINTS.homework), (list) => {
+          if (!list.length) return App.ui.emptyState('Заданий пока нет.');
+          return list.map(function (hw) {
+            var student = students.find((s) => s.id === hw.student_id);
+            return App.ui.h('div', { class: 'hw-item' },
+              App.ui.h('div', { class: 'hw-item__body' },
+                App.ui.h('h4', null, hw.title),
+                App.ui.h('p', { class: 'muted small' },
+                  (student ? student.full_name : 'Ученик') + ' · ' + hw.subject + ' · срок ' + App.ui.formatDate(hw.due_date)),
+                hw.description ? App.ui.h('p', null, hw.description) : null),
+              hw.file_name
+                ? App.ui.h('a', { class: 'btn btn--ghost btn--sm', href: hw.file_url || '#', target: '_blank', rel: 'noopener' }, '⬇ ' + hw.file_name)
+                : App.ui.h('span', { class: 'muted small' }, 'без файла'));
+          });
+        });
+      }
+      loadSent();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Концерты и анонсы — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">📊</span><span>Дашборд</span></a>
+        <a class="nav-item" href="teachers.html"><span class="nav-item__icon">👨‍🏫</span><span>Преподаватели</span></a>
+        <a class="nav-item" href="students.html"><span class="nav-item__icon">🎓</span><span>Реестр учеников</span></a>
+        <a class="nav-item" href="events.html"><span class="nav-item__icon">🎫</span><span>Концерты и анонсы</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Директор</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Концерты и анонсы</h1>
+          <p class="topbar__subtitle">Афиша мероприятий школы</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Директор</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Концерты и анонсы</h2>
+            <p class="muted">Создание и удаление анонсов концертов школы.</p>
+          </div>
+          <button class="btn btn--primary" id="btn-add">+ Создать анонс</button>
+        </div>
+
+        <div class="panel">
+          <div class="event-list" id="event-list"></div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Модальное окно: новый анонс -->
+  <div class="modal-overlay modal-hidden" id="modal-event">
+    <form class="modal" id="event-form">
+      <div class="modal__head">
+        <h3 class="modal__title">Новый анонс концерта</h3>
+        <button type="button" class="modal__close" data-close="modal-event" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal__body">
+        <div class="form-grid">
+          <div style="grid-column:1/-1">
+            <label class="field"><span class="field__label">Название *</span>
+              <input class="input" name="title" placeholder="Отчётный концерт" required /></label>
+          </div>
+          <label class="field"><span class="field__label">Место *</span>
+            <input class="input" name="place" placeholder="Большой зал" required /></label>
+          <label class="field"><span class="field__label">Дата *</span>
+            <input class="input" name="date" type="date" required /></label>
+          <label class="field"><span class="field__label">Время *</span>
+            <input class="input" name="time" type="time" required /></label>
+          <div style="grid-column:1/-1">
+            <label class="field"><span class="field__label">Описание</span>
+              <textarea class="input" name="description" rows="3" placeholder="Детали мероприятия…"></textarea></label>
+          </div>
+        </div>
+        <div class="modal__error" id="event-error" style="display:none"></div>
+      </div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close="modal-event">Отмена</button>
+        <button type="submit" class="btn btn--primary">Опубликовать</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Диалог подтверждения удаления -->
+  <div class="modal-overlay modal-hidden" id="modal-confirm">
+    <form class="modal" id="confirm-form">
+      <div class="modal__head">
+        <h3 class="modal__title">Подтверждение</h3>
+        <button type="button" class="modal__close" data-close="modal-confirm" aria-label="Закрыть">✕</button>
+      </div>
+      <div class="modal__body"><p class="confirm-text" id="confirm-text"></p></div>
+      <div class="modal__foot">
+        <button type="button" class="btn btn--ghost" data-close="modal-confirm">Отмена</button>
+        <button type="submit" class="btn btn--danger" id="confirm-yes">Удалить</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'director' });
+      if (!App.shell.guard(['DIRECTOR'])) return;
+      App.shell.init({ title: 'Концерты и анонсы', subtitle: 'Расписание мероприятий' });
+
+      var listEl = document.getElementById('event-list');
+      var modal = document.getElementById('modal-event');
+      var form = document.getElementById('event-form');
+      var errorBox = document.getElementById('event-error');
+      var confirmModal = document.getElementById('modal-confirm');
+      var confirmText = document.getElementById('confirm-text');
+      var events = [];
+      var pendingDelete = null;
+
+      function openModal() { modal.classList.remove('modal-hidden'); modal.classList.add('is-open'); errorBox.style.display = 'none'; }
+      function closeModal() { modal.classList.add('modal-hidden'); modal.classList.remove('is-open'); }
+      function openConfirm() { confirmModal.classList.remove('modal-hidden'); confirmModal.classList.add('is-open'); }
+      function closeConfirm() { confirmModal.classList.add('modal-hidden'); confirmModal.classList.remove('is-open'); }
+
+      document.addEventListener('click', function (e) {
+        var closer = e.target.closest('[data-close]');
+        if (closer) { closeModal(); closeConfirm(); }
+        if (e.target.classList.contains('modal-overlay')) { closeModal(); closeConfirm(); }
+      });
+
+      document.getElementById('btn-add').addEventListener('click', openModal);
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var data = {};
+        form.querySelectorAll('input, textarea, select').forEach(function (el) { if (el.name) data[el.name] = el.value.trim(); });
+        if (!data.title || !data.place || !data.date || !data.time) { showError('Заполните обязательные поля.'); return; }
+        var btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        try {
+          await App.api.post(App.CONFIG.ENDPOINTS.events, data);
+          App.ui.toast('Анонс опубликован', 'success');
+          closeModal(); form.reset(); load();
+        } catch (err) { showError(err.message); }
+        finally { btn.disabled = false; }
+      });
+
+      function showError(msg) { errorBox.textContent = msg; errorBox.style.display = ''; }
+
+      // делегирование удаления по кнопкам в карточках
+      listEl.addEventListener('click', function (e) {
+        var btn = e.target.closest('.btn--danger');
+        if (!btn) return;
+        var card = btn.closest('.event-card');
+        pendingDelete = events.find((ev) => ev.id === Number(card.getAttribute('data-id')));
+        if (!pendingDelete) return;
+        confirmText.textContent = 'Удалить анонс «' + pendingDelete.title + '»?';
+        openConfirm();
+      });
+
+      document.getElementById('confirm-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        if (!pendingDelete) return closeConfirm();
+        try {
+          await App.api.del(App.CONFIG.ENDPOINTS.event(pendingDelete.id));
+          App.ui.toast('Анонс удалён', 'success');
+          closeConfirm(); load();
+        } catch (err) { App.ui.toast(err.message, 'error'); closeConfirm(); }
+      });
+
+      function load() {
+        App.shell.loadInto(listEl, () => App.api.get(App.CONFIG.ENDPOINTS.events), (list) => {
+          events = list || [];
+          if (!events.length) return App.ui.emptyState('Мероприятий пока нет.');
+          var frag = document.createDocumentFragment();
+          events.forEach(function (ev) {
+            var card = App.shell.eventCard(ev, App.ui.h('button', { class: 'btn btn--danger btn--sm', type: 'button' }, 'Удалить'));
+            card.setAttribute('data-id', ev.id);
+            frag.appendChild(card);
+          });
+          return frag;
+        });
+      }
+      load();
+    })();
+  </script>
+</body>
+</html>

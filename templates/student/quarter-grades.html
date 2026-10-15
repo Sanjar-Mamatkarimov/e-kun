@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Четвертные оценки — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="../css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar__brand">
+        <div class="sidebar__logo">🎵</div>
+        <div><strong>Э-Күндөлүк</strong><span>Музыкальная школа</span></div>
+      </div>
+      <nav class="sidebar__nav">
+        <a class="nav-item" href="dashboard.html"><span class="nav-item__icon">🏠</span><span>Главная</span></a>
+        <a class="nav-item" href="diary.html"><span class="nav-item__icon">📖</span><span>Электронный дневник</span></a>
+        <a class="nav-item" href="quarter-grades.html"><span class="nav-item__icon">🏅</span><span>Четвертные оценки</span></a>
+        <a class="nav-item" href="repertoire.html"><span class="nav-item__icon">🎼</span><span>Мой репертуар</span></a>
+        <a class="nav-item" href="homework.html"><span class="nav-item__icon">📁</span><span>Материалы и задания</span></a>
+        <a class="nav-item" href="schedule.html"><span class="nav-item__icon">🗓️</span><span>Расписание</span></a>
+      </nav>
+      <div class="sidebar__foot">
+        <div class="user-card">
+          <div class="user-card__avatar" data-user-avatar>?</div>
+          <div class="user-card__info"><strong data-user-name>Пользователь</strong><span>Ученик</span></div>
+        </div>
+        <button class="btn btn--ghost btn--block" id="logout-btn">Выйти</button>
+      </div>
+    </aside>
+
+    <div class="app-main">
+      <header class="topbar">
+        <button class="topbar__menu" id="menu-btn" aria-label="Меню">☰</button>
+        <div class="topbar__titles">
+          <h1 class="topbar__title">Четвертные оценки</h1>
+          <p class="topbar__subtitle">Итоговые оценки по предметам</p>
+        </div>
+        <div class="topbar__right"><span class="role-chip">Ученик</span></div>
+      </header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <h2 class="page-head__title">Мои четвертные оценки</h2>
+            <p class="muted">Здесь отображаются оценки, которые выставил и сохранил учитель.</p>
+          </div>
+        </div>
+        <div id="quarter-grades-view"></div>
+      </main>
+    </div>
+  </div>
+
+  <script src="../js/config.js"></script>
+  <script src="../js/store.js"></script>
+  <script src="../js/mock.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/ui.js"></script>
+  <script src="../js/shell.js"></script>
+  <script>
+    (function () {
+      App.shell.setup({ login: '../login.html', home: 'dashboard.html', folder: 'student' });
+      if (!App.shell.guard(['STUDENT'])) return;
+      App.shell.init({ title: 'Четвертные оценки', subtitle: 'Итоговые оценки по предметам' });
+
+      var view = document.getElementById('quarter-grades-view');
+      App.shell.loadInto(view, function () {
+        return App.api.get(App.CONFIG.ENDPOINTS.studentQuarterGrades);
+      }, function (grades) {
+        if (!grades.length) return App.ui.emptyState('Учитель ещё не сохранил четвертные оценки.');
+        return App.ui.h('div', { class: 'panel' },
+          App.ui.h('div', { class: 'table-wrap' },
+            App.ui.h('table', { class: 'table' },
+              App.ui.h('thead', null, App.ui.h('tr', null,
+                App.ui.h('th', null, 'Учебный год'),
+                App.ui.h('th', null, 'Четверть'),
+                App.ui.h('th', null, 'Предмет'),
+                App.ui.h('th', null, 'Период'),
+                App.ui.h('th', null, 'Оценка'))),
+              App.ui.h('tbody', null, grades.slice().sort(function (a, b) {
+                  return b.school_year.localeCompare(a.school_year) ||
+                    b.quarter - a.quarter ||
+                    a.subject.localeCompare(b.subject, 'ru');
+                }).map(function (grade) {
+                  return App.ui.h('tr', null,
+                    App.ui.h('td', null, grade.school_year),
+                    App.ui.h('td', null, 'Четверть ' + grade.quarter),
+                    App.ui.h('td', null, grade.subject),
+                    App.ui.h('td', null, App.ui.formatDate(grade.start_date) + ' — ' + App.ui.formatDate(grade.end_date)),
+                    App.ui.h('td', null, App.ui.gradeBadge(grade.grade)));
+                })))));
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вход — Э-Күндөлүк</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="login">
+    <div class="login__bg"></div>
+
+    <div class="login__deco" aria-hidden="true">
+      <span class="login__glow"></span>
+      <span class="login__staff"></span>
+      <span class="login__staff login__staff--low"></span>
+
+      <span class="login__icon" style="--x:-3%;--y:4%;--s:150px;--o:.10;--r:-14deg;--dur:13s">🎼</span>
+      <span class="login__icon" style="--x:83%;--y:9%;--s:98px;--o:.12;--r:12deg;--dur:11s;--d:-3s">🎻</span>
+      <span class="login__icon" style="--x:3%;--y:68%;--s:112px;--o:.10;--r:8deg;--dur:15s;--d:-6s">🎹</span>
+      <span class="login__icon" style="--x:86%;--y:64%;--s:106px;--o:.11;--r:-10deg;--dur:12s;--d:-2s">🎷</span>
+      <span class="login__icon" style="--x:11%;--y:33%;--s:72px;--o:.09;--r:16deg;--dur:14s;--d:-8s">🎺</span>
+      <span class="login__icon" style="--x:75%;--y:36%;--s:68px;--o:.09;--r:-16deg;--dur:10s;--d:-4s">🥁</span>
+      <span class="login__icon" style="--x:69%;--y:87%;--s:60px;--o:.08;--r:0deg;--dur:16s;--d:-5s">🎸</span>
+      <span class="login__icon" style="--x:23%;--y:89%;--s:58px;--o:.08;--r:-8deg;--dur:12s;--d:-1s">🪕</span>
+
+      <span class="login__icon login__icon--note" style="--x:29%;--y:15%;--s:34px;--o:.24;--dur:9s">🎵</span>
+      <span class="login__icon login__icon--note" style="--x:63%;--y:11%;--s:28px;--o:.22;--dur:8s;--d:-2s">🎶</span>
+      <span class="login__icon login__icon--note" style="--x:17%;--y:57%;--s:26px;--o:.2;--dur:10s;--d:-4s">🎵</span>
+      <span class="login__icon login__icon--note" style="--x:80%;--y:51%;--s:30px;--o:.22;--dur:9s;--d:-1s">🎶</span>
+
+      <span class="login__drift" style="--x:7%;--s:26px;--dur:16s;--d:0s">🎵</span>
+      <span class="login__drift" style="--x:25%;--s:20px;--dur:21s;--d:-6s">🎶</span>
+      <span class="login__drift" style="--x:46%;--s:24px;--dur:18s;--d:-10s">🎵</span>
+      <span class="login__drift" style="--x:67%;--s:18px;--dur:23s;--d:-3s">🎶</span>
+      <span class="login__drift" style="--x:88%;--s:26px;--dur:17s;--d:-13s">🎵</span>
+      <span class="login__drift" style="--x:56%;--s:16px;--dur:20s;--d:-8s">🎵</span>
+    </div>
+
+    <div class="login__card">
+      <div class="login__brand">
+        <div class="login__logo">🎵</div>
+        <div>
+          <h1 class="login__title">Э-Күндөлүк</h1>
+          <p class="login__subtitle">Электронный дневник музыкальной школы</p>
+        </div>
+      </div>
+
+      <form class="login__form" id="login-form" novalidate>
+        <label class="field">
+          <span class="field__label">Логин</span>
+          <input class="input" name="username" placeholder="Введите логин" autocomplete="username" required />
+        </label>
+        <label class="field">
+          <span class="field__label">Пароль</span>
+          <span class="password">
+            <input class="input" name="password" type="password" placeholder="Введите пароль" autocomplete="current-password" required />
+            <button type="button" class="password__toggle" id="toggle-password" aria-label="Показать пароль" aria-pressed="false" title="Показать пароль">
+              <svg class="password__icon password__icon--show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></svg>
+              <svg class="password__icon password__icon--hide" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" /><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+            </button>
+          </span>
+        </label>
+        <div class="login__error" id="login-error" style="display:none"></div>
+        <button class="btn btn--primary btn--block" type="submit" id="login-submit">Войти</button>
+      </form>
+
+      <div class="login__demo" id="demo-box">
+        <p class="login__demo-title">Тестовый доступ</p>
+        <ul class="login__demo-list">
+          <li class="demo-login" data-login="director"><b>Директор</b><span>director / director</span></li>
+          <li class="demo-login" data-login="teacher"><b>Учитель</b><span>teacher / teacher</span></li>
+          <li class="demo-login" data-login="student"><b>Ученик</b><span>student / student</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="login__footer">© 2026 Музыкальная школа. Все права защищены.</p>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/mock.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/shell.js"></script>
+  <script>
+    /* ---------- логика страницы входа ---------- */
+    (function () {
+      'use strict';
+      var form = document.getElementById('login-form');
+      var errorBox = document.getElementById('login-error');
+      var submitBtn = document.getElementById('login-submit');
+      var demoBox = document.getElementById('demo-box');
+
+      // уже вошли? -> сразу на свою главную
+      if (App.auth.isAuthenticated()) {
+        location.replace(App.homeForRole(App.auth.getRole()));
+        return;
+      }
+
+      // тестовые учётные записи доступны всегда
+      if (demoBox) {
+        demoBox.querySelectorAll('.demo-login').forEach(function (li) {
+          li.addEventListener('click', function () {
+            var login = li.getAttribute('data-login');
+            form.querySelector('input[name="username"]').value = login;
+            form.querySelector('input[name="password"]').value = login;
+          });
+        });
+      }
+
+      // показать / скрыть пароль
+      var toggleBtn = document.getElementById('toggle-password');
+      var pwInput = form.querySelector('input[name="password"]');
+      if (toggleBtn && pwInput) {
+        toggleBtn.addEventListener('click', function () {
+          var reveal = pwInput.type === 'password';
+          pwInput.type = reveal ? 'text' : 'password';
+          toggleBtn.classList.toggle('is-on', reveal);
+          toggleBtn.setAttribute('aria-pressed', String(reveal));
+          var label = reveal ? 'Скрыть пароль' : 'Показать пароль';
+          toggleBtn.setAttribute('aria-label', label);
+          toggleBtn.setAttribute('title', label);
+          pwInput.focus({ preventScroll: true });
+          try { pwInput.setSelectionRange(pwInput.value.length, pwInput.value.length); } catch (_) {}
+        });
+      }
+
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        var username = form.querySelector('input[name="username"]').value.trim();
+        var password = form.querySelector('input[name="password"]').value;
+        if (!username || !password) {
+          showError('Введите логин и пароль');
+          return;
+        }
+        errorBox.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Вход…';
+        try {
+          var user = await App.api.login(username, password);
+          var name = user && (user.full_name || user.username) || username;
+          App.ui.toast('Добро пожаловать, ' + name + '!', 'success');
+          location.href = App.homeForRole(user && user.role);
+        } catch (err) {
+          showError(err && err.message ? err.message : 'Ошибка входа');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Войти';
+        }
+      });
+
+      function showError(msg) {
+        errorBox.textContent = msg;
+        errorBox.style.display = '';
+      }
+    })();
+  </script>
+</body>
+</html>
